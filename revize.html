@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Révision Exponentielle STI2D - Math Mode</title>
+    
+    <!-- Intégration de KaTeX pour le rendu Mathématique -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --navy-dark: #0a192f;
+            --navy-light: #112240;
+            --navy-lighter: #233554;
+            --white: #ccd6f6;
+            --accent: #64ffda;
+            --correct: #00b894;
+            --wrong: #ff7675;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--navy-dark);
+            color: var(--white);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+        }
+
+        /* Amélioration du rendu KaTeX pour qu'il soit bien blanc/accent */
+        .katex { font-size: 1.1em !important; color: var(--white); }
+        .katex .mord.mathnormal { color: var(--accent); }
+
+        header {
+            width: 100%;
+            background-color: var(--navy-light);
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--navy-lighter);
+        }
+
+        h1 { margin: 0; font-size: 1.4rem; color: var(--accent); letter-spacing: 1px; }
+        .subtitle { font-size: 0.85rem; opacity: 0.8; margin-top: 5px; }
+
+        /* Configuration Panel */
+        #config-panel {
+            background: var(--navy-light);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid var(--navy-lighter);
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .switch-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--navy-lighter);
+        }
+
+        /* Boutons */
+        .btn-primary {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 15px 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            width: 100%;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .btn-primary:hover { background: rgba(100, 255, 218, 0.1); box-shadow: 0 0 15px rgba(100, 255, 218, 0.2); }
+        .btn-primary:active { transform: scale(0.98); }
+
+        /* Quiz Zone */
+        #quiz-container {
+            display: none;
+            width: 95%;
+            max-width: 900px;
+            margin: 20px auto;
+            flex-grow: 1;
+            padding-bottom: 50px;
+        }
+
+        .card {
+            background: var(--navy-light);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            margin-bottom: 20px;
+            border: 1px solid var(--navy-lighter);
+        }
+
+        .question-text { 
+            font-size: 1.3rem; 
+            margin-bottom: 25px; 
+            line-height: 1.6; 
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .options-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .option-btn {
+            background: var(--navy-dark);
+            border: 1px solid var(--navy-lighter);
+            color: var(--white);
+            padding: 20px;
+            text-align: center; /* Centré pour les maths */
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+        .option-btn:hover { border-color: var(--accent); background: #172a45; }
+        
+        .option-btn.correct { 
+            border-color: var(--correct); 
+            background: rgba(0, 184, 148, 0.15); 
+            color: #fff;
+        }
+        .option-btn.wrong { 
+            border-color: var(--wrong); 
+            background: rgba(255, 118, 117, 0.15); 
+            opacity: 0.7;
+        }
+
+        /* Feedback */
+        .feedback {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 6px;
+            background: rgba(10, 25, 47, 0.8);
+            border-left: 4px solid var(--accent);
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            z-index: 102;
+            background: var(--navy-dark);
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* Toggle */
+        .toggle { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--navy-lighter); transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: #8892b0; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: rgba(100, 255, 218, 0.3); border: 1px solid var(--accent); }
+        input:checked + .slider:before { transform: translateX(24px); background-color: var(--accent); }
+
+    </style>
+</head>
+<body>
+
+    <div class="progress-container"><div class="progress-fill" id="progress"></div></div>
+
+    <header>
+        <h1>STI2D <span style="color:#8892b0">•</span> Exponentielles</h1>
+        <div class="subtitle">Programme Complet (Dérivées, Limites, Primitives)</div>
+    </header>
+
+    <div id="config-panel">
+        <h2 style="color:var(--white); font-size:1.2rem; border-bottom: 1px solid var(--navy-lighter); padding-bottom:10px;">Configuration</h2>
+        
+        <div class="switch-container">
+            <span>Ordre des questions</span>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:0.8rem; color:#8892b0">Fixe</span>
+                <label class="toggle">
+                    <input type="checkbox" id="random-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.8rem; color:var(--accent)">Aléatoire</span>
+            </div>
+        </div>
+
+        <div class="switch-container">
+            <span>Mode Correction</span>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:0.8rem; color:#8892b0">À la fin</span>
+                <label class="toggle">
+                    <input type="checkbox" id="instant-feedback-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size:0.8rem; color:var(--accent)">Immédiat</span>
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="startQuiz()">LANCER LE TEST</button>
+    </div>
+
+    <div id="quiz-container"></div>
+
+    <script>
+        /*
+           BANQUE DE QUESTIONS (Format LaTeX)
+           Les formules sont entre $$ (bloc) ou \\( (inline)
+           Note: Double backslash \\ est nécessaire dans les chaînes JS.
+        */
+        const fullQuestionBank = [
+            // --- BASES ---
+            {
+                q: "Simplifiez l'expression : \\[ A = e^3 \\times e^{-5} \\]",
+                options: ["\\( e^8 \\)", "\\( e^{-2} \\)", "\\( e^{-15} \\)", "\\( e^{2} \\)"],
+                answer: 1,
+                explanation: "Règle : \\( e^a \\times e^b = e^{a+b} \\). Ici, \\( 3 + (-5) = -2 \\)."
+            },
+            {
+                q: "Simplifiez l'expression : \\[ B = \\frac{e^x}{e^{-x}} \\]",
+                options: ["\\( 1 \\)", "\\( e^0 \\)", "\\( e^{2x} \\)", "\\( 0 \\)"],
+                answer: 2,
+                explanation: "Règle : \\( \\frac{e^a}{e^b} = e^{a-b} \\). Donc \\( x - (-x) = x + x = 2x \\)."
+            },
+            {
+                q: "Simplifiez : \\[ (e^3)^x \\]",
+                options: ["\\( e^{3+x} \\)", "\\( e^{3x} \\)", "\\( e^{x^3} \\)", "\\( 3e^x \\)"],
+                answer: 1,
+                explanation: "Règle : \\( (e^a)^n = e^{a \\times n} \\)."
+            },
+            
+            // --- EQUATIONS / INEQUATIONS ---
+            {
+                q: "Résoudre dans \\( \\mathbb{R} \\) : \\[ e^x = 1 \\]",
+                options: ["\\( x = 1 \\)", "\\( x = e \\)", "\\( x = 0 \\)", "Impossible"],
+                answer: 2,
+                explanation: "Car \\( e^0 = 1 \\). La fonction exponentielle est bijective."
+            },
+            {
+                q: "Quel est l'ensemble de définition de : \\[ f(x) = \\frac{1}{e^x - 1} \\]",
+                options: ["\\( \\mathbb{R} \\)", "\\( \\mathbb{R}^* \\)", "\\( ]0; +\\infty[ \\)", "\\( [0; +\\infty[ \\)"],
+                answer: 1,
+                explanation: "Il faut que le dénominateur soit non nul : \\( e^x - 1 \\neq 0 \\iff e^x \\neq 1 \\iff x \\neq 0 \\)."
+            },
+            {
+                q: "Résoudre l'inéquation : \\[ e^{-2x} > e^4 \\]",
+                options: ["\\( x > -2 \\)", "\\( x < -2 \\)", "\\( x > 2 \\)", "\\( x < 2 \\)"],
+                answer: 1,
+                explanation: "La fonction exp est croissante, on conserve l'ordre des exposants : \\( -2x > 4 \\iff x < -2 \\) (division par un négatif inverse le sens)."
+            },
+
+            // --- DERIVATION ---
+            {
+                q: "Dérivée de \\( f(x) = e^{-3x} \\) ?",
+                options: ["\\( -3e^{-3x} \\)", "\\( e^{-3x} \\)", "\\( 3e^{-3x} \\)", "\\( -e^{-3x} \\)"],
+                answer: 0,
+                explanation: "Formule \\( (e^{kx})' = ke^{kx} \\). Ici \\( k = -3 \\)."
+            },
+            {
+                q: "Dérivée de \\( f(x) = x \\cdot e^x \\) (Forme \\( uv \\))",
+                options: ["\\( e^x \\)", "\\( xe^x \\)", "\\( e^x(1+x) \\)", "\\( 1 \\)"],
+                answer: 2,
+                explanation: "\\( u=x, v=e^x \\Rightarrow u'=1, v'=e^x \\). Formule \\( u'v + uv' = 1 \\cdot e^x + x \\cdot e^x = e^x(1+x) \\)."
+            },
+            {
+                q: "Dérivée de \\( f(x) = e^{x^2 + 1} \\) (Forme \\( e^u \\))",
+                options: ["\\( 2x e^{x^2+1} \\)", "\\( (x^2+1)e^{x^2} \\)", "\\( e^{2x} \\)", "\\( 2xe^x \\)"],
+                answer: 0,
+                explanation: "Formule \\( (e^u)' = u' e^u \\). Avec \\( u = x^2+1 \\), on a \\( u' = 2x \\)."
+            },
+
+            // --- LIMITES ---
+            {
+                q: "Limite en \\( +\\infty \\) de : \\[ \\lim_{x \\to +\\infty} e^x \\]",
+                options: ["\\( 0 \\)", "\\( 1 \\)", "\\( +\\infty \\)", "\\( -\\infty \\)"],
+                answer: 2,
+                explanation: "L'exponentielle croît très rapidement vers l'infini."
+            },
+            {
+                q: "Limite en \\( -\\infty \\) de : \\[ \\lim_{x \\to -\\infty} e^x \\]",
+                options: ["\\( 0 \\)", "\\( -\\infty \\)", "\\( 1 \\)", "\\( +\\infty \\)"],
+                answer: 0,
+                explanation: "L'asymptote horizontale est \\( y=0 \\) en \\( -\\infty \\)."
+            },
+            {
+                q: "Croissance comparée : \\[ \\lim_{x \\to +\\infty} \\frac{e^x}{x} \\]",
+                options: ["\\( 1 \\)", "\\( 0 \\)", "\\( +\\infty \\)", "\\( -\\infty \\)"],
+                answer: 2,
+                explanation: "L'exponentielle l'emporte toujours sur les polynômes en \\( +\\infty \\)."
+            },
+            {
+                q: "Croissance comparée : \\[ \\lim_{x \\to -\\infty} x e^x \\]",
+                options: ["\\( -\\infty \\)", "\\( 0 \\)", "\\( +\\infty \\)", "Indéterminé"],
+                answer: 1,
+                explanation: "Le \\( e^x \\) (qui tend vers 0) l'emporte sur le \\( x \\) (qui tend vers l'infini). Le produit tend vers 0."
+            },
+
+            // --- PRIMITIVES ---
+            {
+                q: "Primitive de \\( f(x) = e^{4x} \\) ?",
+                options: ["\\( 4e^{4x} \\)", "\\( e^{4x} \\)", "\\( \\frac{1}{4}e^{4x} \\)", "\\( e^{5x} \\)"],
+                answer: 2,
+                explanation: "Une primitive de \\( e^{kx} \\) est \\( \\frac{1}{k}e^{kx} \\)."
+            },
+            {
+                q: "Primitive de \\( f(x) = 3x^2 e^{x^3} \\) ?",
+                options: ["\\( e^{x^3} \\)", "\\( 3e^{x^3} \\)", "\\( x^3 e^{x^3} \\)", "\\( \\frac{1}{3}e^{x^3} \\)"],
+                answer: 0,
+                explanation: "On reconnaît la forme \\( u' e^u \\) avec \\( u=x^3 \\) et \\( u'=3x^2 \\). La primitive est \\( e^u \\)."
+            },
+
+            // --- VARIATIONS ---
+            {
+                q: "Sens de variation de \\( f(x) = e^{-0.5x} \\) ?",
+                options: ["Strictement Croissante", "Strictement Décroissante", "Constante", "Non monotone"],
+                answer: 1,
+                explanation: "C'est une fonction \\( e^{kx} \\) avec \\( k = -0.5 < 0 \\), donc décroissante."
+            },
+            
+            // --- TAUX MOYEN (STI2D) ---
+            {
+                q: "Si \\( C_M \\) est le coeff multiplicateur global sur \\( n \\) années, le taux moyen \\( t_m \\) vérifie :",
+                options: ["\\( 1+t_m = (C_M)^n \\)", "\\( 1+t_m = (C_M)^{\\frac{1}{n}} \\)", "\\( 1+t_m = \\frac{C_M}{n} \\)", "\\( t_m = \\sqrt{C_M} \\)"],
+                answer: 1,
+                explanation: "Le coefficient moyen est la racine \\( n \\)-ième du coefficient global : \\( (C_M)^{\\frac{1}{n}} \\)."
+            }
+        ];
+
+        // --- MOTEUR DU QUIZ ---
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+        let isRandom = false;
+        let isInstant = true;
+
+        const configPanel = document.getElementById('config-panel');
+        const quizContainer = document.getElementById('quiz-container');
+        const progressBar = document.getElementById('progress');
+
+        // Fonction pour rendre les maths avec KaTeX après injection HTML
+        function renderMath() {
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "\\[", right: "\\]", display: true},
+                        {left: "\\(", right: "\\)", display: false}
+                    ]
+                });
+            }
+        }
+
+        function startQuiz() {
+            isRandom = document.getElementById('random-toggle').checked;
+            isInstant = document.getElementById('instant-feedback-toggle').checked;
+
+            if (isRandom) {
+                currentQuestions = [...fullQuestionBank].sort(() => 0.5 - Math.random());
+            } else {
+                currentQuestions = [...fullQuestionBank];
+            }
+
+            currentIndex = 0;
+            score = 0;
+            userAnswers = [];
+            
+            configPanel.style.display = 'none';
+            quizContainer.style.display = 'block';
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const progress = ((currentIndex) / currentQuestions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            if (currentIndex >= currentQuestions.length) {
+                showResults();
+                return;
+            }
+
+            const q = currentQuestions[currentIndex];
+            
+            let html = `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; color:#8892b0; margin-bottom:15px; font-size:0.9rem; border-bottom:1px solid #233554; padding-bottom:10px;">
+                        <span>Question ${currentIndex + 1} / ${currentQuestions.length}</span>
+                        <span>Score: ${score}</span>
+                    </div>
+                    <div class="question-text">${q.q}</div>
+                    <div class="options-grid">
+                        ${q.options.map((opt, idx) => `
+                            <div class="option-btn" onclick="handleAnswer(${idx}, this)">${opt}</div>
+                        `).join('')}
+                    </div>
+                    <div id="feedback-${currentIndex}" class="feedback"></div>
+                    <button id="next-btn-${currentIndex}" class="btn-primary" style="display:none; margin-top:25px;" onclick="nextQuestion()">
+                        ${currentIndex === currentQuestions.length - 1 ? 'VOIR LE BILAN' : 'QUESTION SUIVANTE'}
+                    </button>
+                </div>
+            `;
+
+            quizContainer.innerHTML = html;
+            
+            // IMPORTANT : On demande à KaTeX de transformer le LaTeX en belles maths
+            renderMath();
+        }
+
+        function handleAnswer(selectedIndex, btnElement) {
+            if (btnElement.getAttribute('data-disabled') === 'true') return;
+
+            const q = currentQuestions[currentIndex];
+            const isCorrect = selectedIndex === q.answer;
+            const buttons = btnElement.parentElement.children;
+            
+            // Désactiver tout
+            for (let btn of buttons) {
+                btn.setAttribute('data-disabled', 'true');
+                btn.style.cursor = 'default';
+            }
+
+            userAnswers.push({
+                question: q,
+                selected: selectedIndex,
+                correct: isCorrect
+            });
+
+            if (isCorrect) score++;
+
+            if (isInstant) {
+                // Mode immédiat
+                if (isCorrect) {
+                    btnElement.classList.add('correct');
+                    showFeedback(true, q.explanation);
+                } else {
+                    btnElement.classList.add('wrong');
+                    buttons[q.answer].classList.add('correct');
+                    showFeedback(false, q.explanation);
+                }
+                document.getElementById(`next-btn-${currentIndex}`).style.display = 'block';
+            } else {
+                // Mode fin (rapide)
+                btnElement.classList.add('selected');
+                // Petit délai pour feedback visuel de la sélection
+                setTimeout(nextQuestion, 250);
+            }
+        }
+
+        function showFeedback(isCorrect, text) {
+            const fb = document.getElementById(`feedback-${currentIndex}`);
+            fb.style.display = 'block';
+            fb.style.borderColor = isCorrect ? 'var(--correct)' : 'var(--wrong)';
+            fb.innerHTML = `<strong style="color:${isCorrect ? 'var(--correct)' : 'var(--wrong)'}">${isCorrect ? 'EXCELLENT !' : 'ERREUR...'}</strong><br><div style="margin-top:10px; font-size:0.95rem;">${text}</div>`;
+            renderMath(); // Rendre les maths aussi dans l'explication
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            showQuestion();
+        }
+
+        function showResults() {
+            progressBar.style.width = '100%';
+            
+            let gradeColor = score > 15 ? 'var(--correct)' : (score > 10 ? '#f1c40f' : 'var(--wrong)');
+            let gradeText = score > 15 ? "Prêt pour l'évaluation !" : (score > 10 ? "Bases solides, mais à perfectionner." : "Il faut relire le cours d'urgence.");
+
+            let summaryHtml = `
+                <div class="card" style="text-align:center;">
+                    <h2 style="color:var(--white);">BILAN DE LA SÉANCE</h2>
+                    <div style="width:120px; height:120px; border-radius:50%; border:6px solid ${gradeColor}; display:flex; align-items:center; justify-content:center; font-size:2.5rem; margin:20px auto; font-weight:bold; color:var(--white);">
+                        ${score}/${currentQuestions.length}
+                    </div>
+                    <p style="font-size:1.2rem; color:${gradeColor}; margin-bottom:30px;">${gradeText}</p>
+                    <button class="btn-primary" onclick="location.reload()">RECOMMENCER</button>
+                </div>
+            `;
+
+            // Correction détaillée si on n'était pas en mode immédiat ou juste pour récap
+            if (!isInstant || true) { 
+                summaryHtml += `<h3 style="text-align:center; margin:40px 0 20px; color:var(--accent);">CORRECTION DÉTAILLÉE</h3>`;
+                userAnswers.forEach((ans, idx) => {
+                    summaryHtml += `
+                        <div class="card" style="border-left: 5px solid ${ans.correct ? 'var(--correct)' : 'var(--wrong)'}; padding:20px;">
+                            <div style="font-size:0.8rem; color:#8892b0; margin-bottom:10px;">Question ${idx+1}</div>
+                            <div class="question-text" style="font-size:1rem; text-align:left; margin-bottom:10px;">${ans.question.q}</div>
+                            
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                                <div style="color:${ans.correct ? 'var(--correct)' : 'var(--wrong)'}; font-weight:bold;">
+                                    Vous : ${ans.question.options[ans.selected]}
+                                </div>
+                                ${!ans.correct ? `<div style="color:var(--correct)">Réponse : ${ans.question.options[ans.question.answer]}</div>` : ''}
+                            </div>
+                            
+                            <div style="font-size:0.9rem; background:rgba(0,0,0,0.2); padding:10px; border-radius:4px;">
+                                💡 ${ans.question.explanation}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            quizContainer.innerHTML = summaryHtml;
+            renderMath(); // Important pour le rendu final
+        }
+    </script>
+</body>
+</html>
